@@ -13,7 +13,6 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
-// Groq inasoma key kutoka kwenye Environment Variable
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `
@@ -60,54 +59,64 @@ async function initBot() {
 
     sock.ev.on('messages.upsert', async ({ messages, type }) => {
       if (type !== 'notify') return;
-      const msg = messages[0];
-      if (!msg.message) return;
+      
+      for (const msg of messages) {
+        if (!msg.message) continue;
 
-      const sender = msg.key.remoteJid;
+        const sender = msg.key.remoteJid;
 
-      // 1. AUTO VIEW STATUS WITH WIDE EMOJI SELECTION
-      if (sender === 'status@broadcast') {
-        try {
-          await sock.readMessages([msg.key]);
-          const randomEmoji = EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)];
+        // 1. AUTO VIEW STATUS WITH EMOJI REACT
+        if (sender === 'status@broadcast') {
+          try {
+            await sock.readMessages([msg.key]);
+            const randomEmoji = EMOJI_LIST[Math.floor(Math.random() * EMOJI_LIST.length)];
 
-          await sock.sendMessage(sender, {
-            react: { text: randomEmoji, key: msg.key }
-          }, { statusJidList: [msg.key.participant] });
+            await sock.sendMessage(sender, {
+              react: { text: randomEmoji, key: msg.key }
+            }, { statusJidList: [msg.key.participant] });
 
-          console.log(`Status imesomwa & kuwekewa reaction: ${randomEmoji}`);
-        } catch (err) {
-          console.error('Error handling status:', err.message);
+            console.log(`Status imesomwa & kuwekewa reaction: ${randomEmoji}`);
+          } catch (err) {
+            console.error('Error handling status:', err.message);
+          }
+          continue; // Endelea kwenye message inayofuata badala ya kukata kodi yote
         }
-        return;
-      }
 
-      // 2. ANTI-DELETE DETECTOR
-      if (msg.message.protocolMessage && msg.message.protocolMessage.type === 0) {
-        console.log('Meseji imefutwa na mtumiaji!');
-        return;
-      }
+        // 2. ANTI-DELETE DETECTOR
+        if (msg.message.protocolMessage && msg.message.protocolMessage.type === 0) {
+          console.log('Meseji imefutwa na mtumiaji!');
+          continue;
+        }
 
-      // 3. HUMAN-LIKE AI REPLIES
-      const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
+        // Usijijibu mwenyewe (meseji unazotuma wewe)
+        if (msg.key.fromMe) continue;
 
-      if (text && !msg.key.fromMe) {
-        console.log(`Meseji imepokelewa: ${text}`);
-        try {
-          const completion = await groq.chat.completions.create({
-            messages: [
-              { role: 'system', content: SYSTEM_PROMPT },
-              { role: 'user', content: text }
-            ],
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.7,
-          });
+        // 3. KUCHUKUA TEXT KUTOKA KWENYE KILA AINA YA MESEJI
+        const text = 
+          msg.message.conversation || 
+          msg.message.extendedTextMessage?.text || 
+          msg.message.imageMessage?.caption || 
+          msg.message.videoMessage?.caption || 
+          '';
 
-          const reply = completion.choices[0]?.message?.content || 'Samahani, sijapata jibu.';
-          await sock.sendMessage(sender, { text: reply }, { quoted: msg });
-          console.log(`Jibu limetumwa: ${reply}`);
-        } catch (err) {
-          console.error('Groq AI Error:', err.message);
+        if (text.trim()) {
+          console.log(`Meseji imepokelewa kutoka ${sender}: ${text}`);
+          try {
+            const completion = await groq.chat.completions.create({
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: text }
+              ],
+              model: 'llama-3.3-70b-versatile',
+              temperature: 0.7,
+            });
+
+            const reply = completion.choices[0]?.message?.content || 'Samahani, sijapata jibu.';
+            await sock.sendMessage(sender, { text: reply }, { quoted: msg });
+            console.log(`Jibu limetumwa: ${reply}`);
+          } catch (err) {
+            console.error('Groq AI Error:', err.message);
+          }
         }
       }
     });
