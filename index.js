@@ -79,19 +79,24 @@ async function initBot() {
           } catch (err) {
             console.error('Error handling status:', err.message);
           }
-          continue; // Endelea kwenye message inayofuata badala ya kukata kodi yote
+          continue;
         }
 
-        // 2. ANTI-DELETE DETECTOR
+        // 2. KUZUIA BOT ISIJIBU KWENYE MAGROUP
+        if (sender.endsWith('@g.us')) {
+          continue; // Inaruka meseji za ma-group zote!
+        }
+
+        // 3. ANTI-DELETE DETECTOR
         if (msg.message.protocolMessage && msg.message.protocolMessage.type === 0) {
           console.log('Meseji imefutwa na mtumiaji!');
           continue;
         }
 
-        // Usijijibu mwenyewe (meseji unazotuma wewe)
+        // Usijijibu mwenyewe
         if (msg.key.fromMe) continue;
 
-        // 3. KUCHUKUA TEXT KUTOKA KWENYE KILA AINA YA MESEJI
+        // 4. KUCHUKUA TEXT KUTOKA KWENYE MESEJI ZA KAWAIDA
         const text = 
           msg.message.conversation || 
           msg.message.extendedTextMessage?.text || 
@@ -100,7 +105,7 @@ async function initBot() {
           '';
 
         if (text.trim()) {
-          console.log(`Meseji imepokelewa kutoka ${sender}: ${text}`);
+          console.log(`Meseji binafsi imepokelewa kutoka ${sender}: ${text}`);
           try {
             const completion = await groq.chat.completions.create({
               messages: [
