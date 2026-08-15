@@ -84,7 +84,7 @@ async function initBot() {
 
         // 2. KUZUIA BOT ISIJIBU KWENYE MAGROUP
         if (sender.endsWith('@g.us')) {
-          continue; // Inaruka meseji za ma-group zote!
+          continue;
         }
 
         // 3. ANTI-DELETE DETECTOR
@@ -112,7 +112,7 @@ async function initBot() {
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: text }
               ],
-              model: 'llama-3.3-70b-versatile',
+              model: 'llama-3.1-8b-instant',
               temperature: 0.7,
             });
 
