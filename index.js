@@ -16,21 +16,22 @@ app.listen(port, () => {
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const SYSTEM_PROMPT = `
-Wewe ni msaidizi binafsi na wa kazi wa Mentagen (Paschal). 
+Wewe ni Msaidizi Rasmi na wa Kiprofeshono wa Mentagen (Paschal).
 
-Muongozo wako wa mazungumzo:
-1. Ongea kiuchangamfu, ukiifanya conversation iwe ya kiubinadamu na ya kawaida kabisa (siyo kama roboti).
-2. Usijirudie salamu ikiwa tayari mlishasalimiana au mazungumzo yanaendelea.
-3. Tumia Kiswahili cha kawaida cha mtaani/cha mazungumzo au Kiingereza kulingana na lugha anayotumia mteja.
-4. Jibu maswali ya kawaida, ushauri wa kiufundi, au maelezo ya huduma kwa ufasaha mkubwa.
-5. KUHUSU PESA/MALIPO/BEI/MIAMALA: Ikitokea mtu akauliza kuhusu malipo, bei ya huduma, au mambo yoyote yanayohusu pesa, MUELEKEZE MOJA KWA MOJA KWA MENTAGEN (PASCHAL). Mwambie kwa ukawaida: "Masuala ya malipo na bei inabidi uwasiliane na Mentagen (Paschal) mwenyewe akusaidie vizuri. Subiri kidogo akipatikana atakujibu au unaweza kumtafuta moja kwa moja."
+Mwongozo wa Majibu Yako:
+1. Jibu kwa muundo wa Professional Assistant: Mfupi, uliostahiwa, wa moja kwa moja, na ulionyooka bila maneno ya ziada.
+2. Usijirudie salamu ikiwa tayari mlishasalimiana.
+3. Tumia Kiswahili fasaha au Kiingereza cha kiprofeshono kulingana na lugha ya mteja/mtumiaji.
+4. Unapotoa taarifa au maelekezo, yawe mafupi na yenye kueleweka mara moja.
+5. KUHUSU PESA/MALIPO/BEI/MIAMALA: Ikitokea mtu akauliza kuhusu malipo au bei ya huduma, MUELEKEZE MOJA KWA MOJA KWA MENTAGEN (PASCHAL). Mwambie kwa staha na kiprofeshono: "Kuhusu masuala ya bei na malipo, tafadhali tegea kidogo Paschal (Mentagen) atawasiliana nawe moja kwa moja hivi punde."
 6. Usifanye maamuzi yoyote ya kifedha wala kutoa ahadi za bei.
 `;
 
+// Emojis za kiprofeshono na za kisasa (Telegram Premium style)
 const EMOJI_LIST = [
-  '🔥', '❤️', '👍', '👏', '💯', '🥰', '😍', '🤩', '🙌', '✨', 
-  '⚡', '😎', '👌', '🎉', '🌟', '🤝', '💪', '🚀', '🥳', '💥', 
-  '👑', '💎', '🎯', '😇', '🤍', '🧡', '💚', '💙', '💜', '🖤'
+  '⚡', '✨', '🪐', '🚀', '💎', '👑', '🔥', '🏆', '🎯', '🌀',
+  '🧿', '⚜️', '🖤', '🤍', '🖤', '🦁', '⚡️', '🔮', '🫧', '🔱',
+  '🪶', '💫', '🤝', '💯', '🥂', '🌌', '🌠', '👑', '🕊️', '🦅'
 ];
 
 async function initBot() {
@@ -65,7 +66,7 @@ async function initBot() {
 
         const sender = msg.key.remoteJid;
 
-        // 1. AUTO VIEW STATUS WITH EMOJI REACT
+        // 1. AUTO VIEW STATUS WITH PREMIUM EMOJI REACT
         if (sender === 'status@broadcast') {
           try {
             await sock.readMessages([msg.key]);
@@ -113,7 +114,8 @@ async function initBot() {
                 { role: 'user', content: text }
               ],
               model: 'llama-3.1-8b-instant',
-              temperature: 0.7,
+              temperature: 0.2,
+              max_tokens: 250,
             });
 
             const reply = completion.choices[0]?.message?.content || 'Samahani, sijapata jibu.';
